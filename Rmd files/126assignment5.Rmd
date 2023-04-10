@@ -1,0 +1,143 @@
+---
+title: "PSTAT 126 - Assignment 5"
+subtitle: "Fall 2022"
+author: "Kayla Katakis"
+output:
+  pdf_document:
+    number_sections: true
+---
+_Note: **Submit both your `Rmd` and generated pdf file to Canvas.** Use the same indentation level as **Solution** markers to write your solutions. Improper indentation will break your document._
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r include=FALSE, message=FALSE}
+
+```
+
+1.
+
+(a) In Lab 5 we showed that the OLS estimator for the Simple Linear Regression 
+$$Y_i = \beta_0 + \beta_1 x_i + \epsilon_i$$ is given by
+$$ 
+\begin{pmatrix}
+  \hat\beta_0\\\hat\beta_1
+\end{pmatrix}
+=
+\frac{1}{n\left(\sum_{i=1}^n x_i^2\right) - \left(\sum_{i=1}^n x_i\right)^2}
+\begin{pmatrix}
+  \left(\sum_{i=1}^n x_i^2\right)
+  \left(\sum_{i=1}^n Y_i\right) - \left(\sum_{i=1}^nx_i\right)
+  \left(\sum_{i=1}^n x_iY_i\right)\\
+  n\left(\sum_{i=1}^n x_iY_i\right) - 
+  \left(\sum_{i=1}^n x_i\right)\left(\sum_{i=1}^n Y_i\right)
+\end{pmatrix}.
+$$
+Show that this expression is equivalent to the familiar identity
+$$
+\begin{pmatrix}
+  \hat\beta_0\\\hat\beta_1
+\end{pmatrix}
+=
+\begin{pmatrix}
+  \bar{Y} - \bar{x}\hat\beta_1 \\
+  S_{xY}/S_{xx}
+\end{pmatrix}.
+$$
+\emph{Hint: Refer to Lab 1 for formulas for $S_{xx}$ and $S_{xY}$.}
+
+**Solution**:
+```{r out.width ='80%', out.height = '40%', fig.align ='center'}
+knitr::include_graphics("/Users/kaylakatakis/Desktop/beta1.pdf")
+knitr::include_graphics("/Users/kaylakatakis/Desktop/beta0.pdf")
+```
+
+
+(b) An *intercept-only* model is an alternative way to express that univariate data form a random sample. $Y_1, \dots, Y_n \stackrel{iid}{\sim} N(\mu, \sigma^2)$ is equivalent to
+$$Y_i = \mu + \epsilon_i \;,\quad i = 1, \dots, n$$ with the standard model assumptions.
+
+i. Write the intercept-only model in matrix form.  
+
+**Solution**:
+$$
+\begin{pmatrix}
+Y_1\\ Y_2\\ \vdots\\ Y_n
+\end{pmatrix}
+=
+\beta_0
++
+\begin{pmatrix}
+\epsilon_1\\ \epsilon_2\\ \vdots\\ \epsilon_n
+\end{pmatrix}
+$$
+
+
+ii. Derive the least squares estimator of $\mu$ using the general OLS estimator $(\boldsymbol{X^TX})^{-1}\boldsymbol{X^TY}$.  
+
+**Solution**:   
+
+\newpage
+
+2. For the `prostate` data, fit a model with `lpsa` as the response and the other variables as predictors:
+
+(a) Compute 90 and 95% CIs for the parameter associated with `age`. Using just these intervals, what could we have deduced about the $p$-value for `age` in the regression summary?
+
+**Solution**:
+Using just the intervals, we could conclude that the $p$-value for age
+is significant at a 90% confidence level, but not at 95% because the interval spans over 0 in that case.
+```{r}
+library(dplyr)
+data('prostate', package = 'faraway')
+View(prostate)
+prostate_lm <- lm(lpsa~., data = prostate)
+summary(prostate_lm) 
+# 90% CI: 
+confint(prostate_lm, c('age'), level = 0.9)
+#95% CI:
+confint(prostate_lm, c('age'), level =0.95)
+```
+
+
+(b) Compute and display a 95% joint confidence region for the parameters associated with `age` and `lbph`. Plot the origin on this display. The location of the origin on the display tells us the outcome of a certain hypothesis test. State that test and its outcome.
+
+**Solution**:
+This display shows the hypothesis test with the null hypothesis age = lbph = 0. Here, we fail to reject the null hypothesis because the origin, (0,0) lies inside the confidence region.
+```{r}
+
+library(ellipse)
+plot(ellipse(prostate_lm, c('age','lbph')))
+points(0,0, pch =1)
+abline(v=confint(prostate_lm)['age',], lty = 2)
+abline(h=confint(prostate_lm)['lbph'], lty =2)
+```
+
+
+(c) In the text, we made a permutation test corresponding to the F-test for the significance of all the predictors. Execute the permutation test corresponding to the t-test for `age` in this model. (Hint: `summary(g)$coef[4,3]` gets you the t-statistic you need if the model is called `g`.)
+
+**Solution**:
+```{r}
+t_stat <- summary(prostate_lm)$coef[4,3]
+
+x <- numeric(4000)
+for (i in 1:4000){
+  model = lm(lpsa~lcavol +lweight+sample(age)+lbph+svi+lcp+gleason+pgg45, data = prostate)
+  x[i] = summary(model)$coef[4,3]
+  
+}
+
+mean(abs(x) > abs(t_stat))
+```
+
+
+(d) Remove all the predictors that are not significant at the 5% level. Test this model against the original model. Which model is preferred?
+
+**Solution**:
+The new model is not significantly better than the original, so we would prefer the original. 
+```{r}
+prostate_lm_2 <- lm(lpsa~lcavol +lweight +svi, data = prostate)
+summary(prostate_lm_2)
+```
+
+
+

@@ -1,0 +1,169 @@
+---
+title: "PSTAT 126 - Assignment 7"
+subtitle: "Fall 2022"
+author: "Kayla Katakis"
+output:
+  pdf_document:
+    number_sections: true
+---
+_Note: **Submit both your `Rmd` and generated pdf file to Canvas.** Use the same indentation level as **Solution** markers to write your solutions. Improper indentation will break your document._
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+```{r include=FALSE, message=FALSE}
+library(tidyverse)
+```
+
+1. The data set `mantel` in the `alr4` package has a response $Y$ and three predictors $X_1$, $X_2$ and $X_3$, apply the forward selection and backward elimination algorithms, using AIC as a criterion function. Also, find AIC and BIC for all possible models and compare results. Which appear to be the active regressors?  
+**Solution**:
+X1 and X2 appear to be the active regressors.
+```{r}
+library(alr4)
+names(mantel)
+attach(mantel)
+library(leaps)
+
+#AIC forward selection
+start <- lm(Y~1,mantel)
+end <- lm(Y~., mantel)
+step(start, scope = list(lower = start, upper= end),direction = 'forward')
+
+#AIC backward selection
+step(end, direction = 'backward')
+
+#AIC and BIC for all possible models
+sub1 <- lm(Y~.,mantel)
+sub2 <- lm(Y~X1, mantel)
+sub3 <- lm(Y~X2, mantel)
+sub4 <- lm(Y~X3, mantel)
+sub5 <- lm(Y~X1+X2, mantel)
+sub6 <- lm(Y~X2+X3, mantel)
+sub7 <- lm(Y~X1+X3, mantel)
+sub8 <- lm(Y~1, mantel)
+
+subsets <- list(sub1,sub2,sub3,sub4,sub5,sub6,sub7,sub8)
+for (i in subsets){
+  print(extractAIC(i))
+  print(BIC(i))
+}
+
+```
+
+
+
+
+2. In an unweighted regression problem with $n = 54$, $p = 4$, the results included $\hat\sigma = 4.0$ and the following statistics for four of the cases:  
+\begin{center}
+\begin{tabular}{ cc } 
+ \hline
+ $e_i$ & $h_{ii}$ \\
+ \hline 
+ 1.000 & 0.900 \\ 
+ 1.732 & 0.750 \\
+ 9.000 & 0.250 \\
+ 10.295 & 0.185 \\
+ \hline \\
+\end{tabular}
+\end{center} 
+
+For each of these four cases, compute $r_i$, $D_i$, and $t_i$. Test each of the four cases to be an outlier. Make a qualitative statement about the influence of each case on the analysis.  
+**Solution**: 
+Cases 3 and 4 are influential outliers due to the small t-test values that allow us to reject the null hypothesis and conclude that these values are outliers.
+```{r}
+n<-54
+p<-4
+sigma_hat <- 4.0
+calc_ri <- function(ei,sigma_hat, hii){
+  r_i <- ei /(sigma_hat*sqrt(1-hii))
+  return(r_i)
+}
+calc_di <-function(p, r_i, hii){
+  d_i <- ((1/p)*(r_i^2))*(hii/(1-hii))
+  return(d_i)
+}
+calc_ti<- function(ei,p,n,sigma_hat,hii){
+  s_i2 <- (((n-p)*sqrt(sigma_hat)-(ei^2/(1-hii))/(n-p-1)))
+  t_i <- ei/sqrt(s_i2*(1-hii))
+  return(t_i)
+}
+#first row values
+calc_ri(1.000,sigma_hat,0.900)
+calc_di(p,calc_ri(1.000,sigma_hat,0.900), 0.900)
+calc_ti(1.000,p, n, sigma_hat, 0.900)
+print(" ")
+#second row values
+calc_ri(1.732,sigma_hat,0.750)
+calc_di(p,calc_ri(1.732,sigma_hat,0.750), 0.750)
+calc_ti(1.732,p, n, sigma_hat, 0.750)
+print(" ")
+#third row values
+calc_ri(9.000,sigma_hat,0.250)
+calc_di(p,calc_ri(9.000,sigma_hat,0.250), 0.250)
+calc_ti(9.000,p, n, sigma_hat, 0.250)
+print(" ")
+#fourth row values
+calc_ri(10.295,sigma_hat,0.185)
+calc_di(p,calc_ri(10.295,sigma_hat,0.185), 0.185)
+calc_ti(10.295,p, n, sigma_hat, 0.185)
+print(" ")
+
+#testing t values for outliers
+dt(0.3165509,49)
+dt(0.3468249,49)
+dt(1.050876,49)
+dt(1.155815,49)
+```
+
+
+
+
+3.
+The `lathe1` data set from the `alr4` package contains the results of an experiment on characterizing the life of a drill bit in cutting steel on a lathe. Two factors were varied in the experiment, `Speed` and `Feed` rate. The response is `Life`, the total time until the drill bit fails, in minutes. The values of `Speed` and `Feed` in the data have been coded by computing
+$$
+\begin{aligned}
+  \texttt{Speed} &= \frac{\text{Actual speed in feet per minute}-900}{300}\\
+  \texttt{Feed} &= \frac{\text{Actual feed rate in thousandths of an inch per revolution}-13}{6}.
+\end{aligned}
+$$
+
+(a) Starting with the full second-order model 
+$$
+  E(\texttt{Life}|\texttt{Speed, Feed})=
+  \beta_0+\beta_1\texttt{Speed}+\beta_2\texttt{Feed}+
+  \beta_{11}\texttt{Speed}^2+\beta_{22}\texttt{Feed}^2+
+  \beta_{12}\texttt{Speed}*\texttt{Feed},
+$$
+use the Box–Cox method to show that an appropriate scale for the response is
+the logarithmic scale.  
+**Solution**:
+The 95% confidence interval for the BoxCox transformation contains $\lambda = 0$, so a logarithmic scale would be appropriate.
+```{r}
+library(MASS)
+attach(lathe1)
+#names(lathe1)
+model2 <- lm(Life~1+Speed+Feed+Speed^2+Feed^2+Speed*Feed, lathe1)
+boxcox <- boxcox(model2)
+```
+
+
+(b) Find the two cases that are most influential in the fit of the quadratic mean
+function for log(`Life`), and explain why they are influential. Delete these points
+from the data, refit the quadratic mean function, and compare with the fit with
+all the data.  
+**Solution**:
+Cases 7 and 14 are the most influential in the fit of the quadratic mean because all diagnostic plots reveal that these points do not follow the same trends, thus heavily skewing the model. By removing these points, we get a much more accurate accurate model. The variability explained by the model increases and $p-values$ for predictors Speed and Feed become more significant among other signs of increased accuracy.
+```{r}
+library(alr4)
+data(lathe1)
+attach(lathe1)
+quad_mean_func <-lm(log(Life)~1+Speed+Feed+Speed^2+Feed^2+Speed*Feed, lathe1)
+#plot(quad_mean_func)
+lathe1_copy <- lathe1[-c(7,14),]
+View(lathe1_copy)
+quad_mean_func2 <- lm(log(Life)~1+Speed+Feed+Speed^2+Feed^2+Speed*Feed, lathe1_copy)
+summary(quad_mean_func)
+summary(quad_mean_func2)
+```
+

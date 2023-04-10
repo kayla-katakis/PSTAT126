@@ -1,0 +1,121 @@
+---
+title: "PSTAT 126 - Assignment 6"
+subtitle: "Fall 2022"
+author: "Kayla Katakis"
+output:
+  pdf_document:
+    number_sections: true
+---
+_Note: **Submit both your `Rmd` and generated pdf file to Gradescope.** Use the same indentation level as **Solution** markers to write your solutions. Improper indentation will break your document._
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r include=FALSE, message=FALSE}
+library(tidyverse)
+```
+
+1. Using the prostate data from the faraway package with lpsa (log prostate specific antigen) as response and lcavol (log cancer volume) as predictor, the fitted model is
+$$
+\text { lpsa }=1.507+0.719 \text { lcavol }
+$$
+
+  Provide an interpretation of the estimated coefficient for lcavol based on the fact that both variables are log-transformed.  
+
+  **Solution**:  
+
+
+
+2.
+In a study of faculty salaries in a small college in the Midwest, a linear regression model was fit, giving the fitted mean function
+$$
+E(\text { Salary } \mid \text { Sex })=24697-3340 \text { Sex, }
+$$
+where Sex equals 1 if the faculty member was female and 0 if male. The response Salary is measured in dollars (the data are from the 1970s).  
+
+  (a) Give a sentence that describes the meaning of the two estimated coefficients.  
+
+  **Solution**: 
+
+  (b) An alternative mean function fit to these data with an additional term, Years, the number of years employed at this college, gives the estimated mean function
+  $$
+  E(\text { Salary } \mid \text { Sex, Years })=18065+201 \text { Sex }+759 \text { Years } .
+  $$
+  The important difference between these two mean functions is that the coefficient for Sex has changed signs. Provide an explanation as to how this could happen.  
+
+  **Solution**:
+  $\beta=(X'X)^{-1}X'Y$ is dependent on X, therefore its value will change when new variables are introduced.
+
+3.
+This problem uses the data set cakes from the alr4 package, which contains the results of a baking experiment on n = 14 packaged cake mixes. The variables X1 and X2 data are the predictors representing baking time in minutes and baking temperature in degrees Fahrenheit, respectively. The response Y is a palatability score indicating quality of the cake.  
+
+  (a) Fit the model  
+  $$
+  E(\mathrm{Y} \mid \mathrm{X} 1, \mathrm{X} 2)=\beta_0+\beta_1 \mathrm{X} 1+\beta_2 \mathrm{X} 2+\beta_{11} \mathrm{X} 1^2+\beta_{22} \mathrm{X} 2^2+\beta_{12} \mathrm{X} 1 \mathrm{X} 2
+  $$
+  and verify that the p-values for the quadratic terms and the interaction are all less than 0.005.  
+
+  **Solution**:
+  All $p$-values are lessthan 0.005.
+```{r}
+library(alr4)
+data(cakes)
+attach(cakes)
+x1_sq = X1*X1
+x2_sq = X2*X2
+x1_x2 = X1*X2
+cake_model <-lm(Y~X1+X2+x1_sq+x2_sq+x1_x2, data = cakes)
+summary(cake_model)
+```
+
+  (b) The cake experiment was carried out in two blocks of seven observations each. It is possible that the response might differ by block, due to differences in air temperature or humidity, for example. Add a main effect for the Block variable to model in part a), fit the model, and summarize results.
+
+  **Solution**:
+  The block in which the experiment was carried out is not a significant predictor.
+```{r}
+cake_model2 <-lm(Y~X1+X2+x1_sq+x2_sq+x1_x2+ block, data = cakes)
+summary(cake_model2)
+```
+  
+
+
+
+4.
+The data BGSall in the alr4 package contains information on n = 136 children in the Berkeley Guidance study, including heights at ages 9 and 18 (HT9 and HT18), and gender (Sex = 0 for male, 1 for female). Consider the regression of HT18 on HT9 and the grouping factor Sex.  
+
+  (a) Draw the scatterplot of HT18 versus HT9, using a different symbol for males and females. Comment on the information in the graph about an appropriate mean function for these data.  
+
+  **Solution**:
+
+  (b) Obtain the appropriate test for a parallel regression model.  
+
+  **Solution**:
+
+  (c) Assuming the parallel regression model is adequate, estimate a 95% confidence interval for the difference between males and females. For the parallel regression model, this is the difference in the intercepts of the two groups.  
+
+  **Solution**:
+
+5.
+The data set infmort from the faraway package contains information on the mortality of infants for 105 nations. The variable mortality gives the number of deaths per 1000 live births, while income is the per capita income in US dollars and region indicates the geographic area of the nation. Consider the model
+$$
+E(\log (\text { mortality }) \mid \text { income,region })=\beta_0+\beta_1 \log (\text { income })+\beta_2 \text { region }+\beta_{12} \text { region } * \log (\text { income })
+$$
+
+  (a) State the null and alternative hypotheses for the overall F-test for this model. Perform the test and summarize results.  
+
+  **Solution**:
+
+(b) Explain the practical meaning of the hypothesis $\mathcal{H}_0: \beta_{12}=\beta_2=0$ in the context of the above model.  
+
+  **Solution**:
+
+  (c) Perform a test for the hypothesis in part b) and summarize your results.  
+
+  **Solution**:
+
+
+
+
+
+
